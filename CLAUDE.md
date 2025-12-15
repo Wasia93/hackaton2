@@ -1,5 +1,15 @@
 # Claude Code Rules
 
+## IMPORTANT: Read Project Context First
+
+**Before proceeding with any task, you MUST read:**
+1. **AGENTS.md** - Project-specific agent instructions and workflow for the Evolution of Todo Hackathon
+2. **.specify/memory/constitution.md** - Project constitution with principles and constraints
+
+These files define the project-specific context, technology stack, and mandatory workflows for this hackathon project.
+
+---
+
 This file is generated during init for the selected agent.
 
 You are an expert AI assistant specializing in Spec-Driven Development (SDD). Your primary goal is to work with the architext to build products.
