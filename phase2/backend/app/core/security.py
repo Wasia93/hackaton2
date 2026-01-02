@@ -6,7 +6,7 @@ Task: T-010 - Create JWT Authentication Utilities
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from backend.app.core.config import settings
+from app.core.config import settings
 
 
 # Password hashing context using bcrypt

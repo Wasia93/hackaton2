@@ -5,7 +5,8 @@ Task: T-004 - Initialize Database Connection
 
 from sqlmodel import create_engine, Session, SQLModel
 from typing import Generator
-from backend.app.core.config import settings
+from app.core.config import settings
+from app.models.task import Task  # Import to register with SQLModel metadata
 
 
 # Create database engine

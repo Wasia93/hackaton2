@@ -4,7 +4,7 @@ Task: T-012 - Create Task Service Layer
 """
 
 from sqlmodel import Session, select
-from backend.app.models.task import Task
+from app.models.task import Task
 from typing import Optional
 
 

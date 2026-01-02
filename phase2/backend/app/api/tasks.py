@@ -5,10 +5,10 @@ Task: T-013 - Create Task API Endpoints
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
-from backend.app.core.database import get_session
-from backend.app.core.auth import get_current_user_id
-from backend.app.services.task_service import TaskService
-from backend.app.models.task import Task
+from app.core.database import get_session
+from app.core.auth import get_current_user_id
+from app.services.task_service import TaskService
+from app.models.task import Task
 from pydantic import BaseModel
 from typing import Optional
 

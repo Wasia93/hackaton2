@@ -29,24 +29,33 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Implement Better Auth registration
-      // For now, simulating registration with JWT token storage
-      // This will be replaced with actual Better Auth implementation in T-017, T-018
+      // Call backend register endpoint to get valid JWT token
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500))
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
 
-      // For demo purposes, accept any registration
-      // In production, this would call Better Auth
-      if (name && email && password) {
-        // Store a mock token (will be replaced with real Better Auth token)
-        localStorage.setItem("auth_token", "mock-jwt-token")
-        router.push("/dashboard")
-      } else {
-        setError("All fields are required")
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.detail || "Registration failed")
       }
-    } catch (err) {
-      setError("Registration failed. Email may already exist.")
+
+      const data = await response.json()
+
+      // Store the valid JWT token from backend
+      localStorage.setItem("auth_token", data.access_token)
+      localStorage.setItem("user_id", data.user_id)
+      localStorage.setItem("user_email", email)
+
+      // Redirect to dashboard
+      router.push("/dashboard")
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Email may already exist.")
     } finally {
       setIsLoading(false)
     }

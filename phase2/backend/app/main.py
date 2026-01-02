@@ -5,8 +5,10 @@ Task: T-014 - Create FastAPI Application Entry Point
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.app.core.config import settings
-from backend.app.api.tasks import router as tasks_router
+from app.core.config import settings
+from app.api.tasks import router as tasks_router
+from app.api.auth import router as auth_router
+from app.core.database import create_db_and_tables
 
 
 # Create FastAPI application instance
@@ -15,6 +17,12 @@ app = FastAPI(
     description="Todo API with multi-user support and JWT authentication",
     version="2.0.0",
 )
+
+
+# Initialize database tables on startup
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
 
 
 # Configure CORS middleware
@@ -28,6 +36,7 @@ app.add_middleware(
 
 
 # Include routers
+app.include_router(auth_router)
 app.include_router(tasks_router)
 
 
@@ -45,6 +54,19 @@ async def health_check():
         "service": settings.PROJECT_NAME,
         "version": "2.0.0"
     }
+
+
+# Debug endpoint to test authentication
+@app.get("/debug/auth", tags=["system"])
+async def debug_auth(user_id: str = Depends(get_current_user_id)):
+    """Debug endpoint to test authentication"""
+    return {
+        "authenticated": True,
+        "user_id": user_id
+    }
+
+from fastapi import Depends
+from app.core.auth import get_current_user_id
 
 
 # Root endpoint
