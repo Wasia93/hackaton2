@@ -12,6 +12,7 @@ import AddTaskForm from "@/components/AddTaskForm"
 import TaskList from "@/components/TaskList"
 import EditTaskModal from "@/components/EditTaskModal"
 import TaskStats from "@/components/TaskStats"
+import Chatbot from "@/components/Chatbot"
 
 type FilterType = "all" | "completed" | "incomplete"
 type SortType = "date" | "title"
@@ -165,6 +166,9 @@ export default function DashboardPage() {
         onUpdate={handleUpdate}
         onClose={() => setEditingTask(null)}
       />
+
+      {/* AI Chatbot (Phase III) */}
+      <Chatbot onTasksChanged={fetchTasks} />
     </div>
   )
 }
