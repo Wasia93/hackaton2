@@ -22,10 +22,10 @@ export async function apiRequest<T>(
     ? localStorage.getItem("auth_token")
     : null
 
-  // Build headers
-  const headers: HeadersInit = {
+  // Build headers (use Record<string, string> for indexable access)
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   }
 
   // Add authorization header if token exists

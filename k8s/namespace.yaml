@@ -1,0 +1,12 @@
+# Phase IV: Kubernetes Namespace
+# [Task]: T-011
+# [From]: specs/phase4-kubernetes/spec.md FR-3, specs/phase4-kubernetes/plan.md Section 3.1
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: todo-app
+  labels:
+    app.kubernetes.io/name: todo-app
+    app.kubernetes.io/part-of: evolution-of-todo
+    app.kubernetes.io/managed-by: kubectl

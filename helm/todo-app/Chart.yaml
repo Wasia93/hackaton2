@@ -1,0 +1,42 @@
+# Phase IV: Helm Chart Definition
+# [Task]: T-018
+# [From]: specs/phase4-kubernetes/spec.md FR-5, specs/phase4-kubernetes/plan.md Section 4.1
+
+apiVersion: v2
+name: todo-app
+description: Evolution of Todo - Full Stack Application with AI Chatbot
+
+# Chart version (incremented for each chart change)
+version: 1.0.0
+
+# Application version (matches the deployed application)
+appVersion: "1.0.0"
+
+# Chart type: application (default) or library
+type: application
+
+# Keywords for search
+keywords:
+  - todo
+  - fastapi
+  - nextjs
+  - kubernetes
+  - ai
+  - chatbot
+  - mcp
+
+# Home page of the project
+home: https://github.com/evolution-of-todo/hackathon
+
+# Sources
+sources:
+  - https://github.com/evolution-of-todo/hackathon
+
+# Maintainers
+maintainers:
+  - name: Evolution of Todo Team
+    email: team@evolutionoftodo.dev
+
+# Annotations for additional metadata
+annotations:
+  category: Application

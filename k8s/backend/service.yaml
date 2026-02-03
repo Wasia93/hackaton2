@@ -1,0 +1,22 @@
+# Phase IV: Backend Service
+# [Task]: T-017
+# [From]: specs/phase4-kubernetes/spec.md FR-3, specs/phase4-kubernetes/plan.md Section 3.6
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: todo-app
+  labels:
+    app: backend
+    app.kubernetes.io/name: todo-app
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http

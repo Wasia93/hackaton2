@@ -47,6 +47,12 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Docker secrets
+docker/.env
+
+# Kubernetes secrets (use templates only in repo)
+# k8s/secrets.yaml  # Uncomment if using real values
+
 # Logs
 *.log
 npm-debug.log*

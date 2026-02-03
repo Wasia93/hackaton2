@@ -1,0 +1,23 @@
+# Phase IV: Frontend Service
+# [Task]: T-015
+# [From]: specs/phase4-kubernetes/spec.md FR-3, specs/phase4-kubernetes/plan.md Section 3.6
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: todo-app
+  labels:
+    app: frontend
+    app.kubernetes.io/name: todo-app
+    app.kubernetes.io/component: frontend
+spec:
+  type: NodePort
+  selector:
+    app: frontend
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30300
+      protocol: TCP
+      name: http

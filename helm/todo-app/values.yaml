@@ -1,0 +1,114 @@
+# Phase IV: Helm Chart Values
+# [Task]: T-019
+# [From]: specs/phase4-kubernetes/spec.md FR-5, specs/phase4-kubernetes/plan.md Section 4.2
+#
+# Default values for todo-app.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Namespace
+namespace: todo-app
+
+# Frontend Configuration
+frontend:
+  # Number of replicas
+  replicaCount: 2
+
+  # Container image
+  image:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # Service configuration
+  service:
+    type: NodePort
+    port: 3000
+    nodePort: 30300
+
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # Liveness and readiness probes
+  probes:
+    liveness:
+      path: /
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readiness:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+# Backend Configuration
+backend:
+  # Number of replicas
+  replicaCount: 3
+
+  # Container image
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 8000
+
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  # Liveness and readiness probes
+  probes:
+    liveness:
+      path: /health
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readiness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  # Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+# Application Configuration (ConfigMap)
+config:
+  backendUrl: "http://backend:8000"
+  openaiModel: "gpt-4o"
+  projectName: "Evolution of Todo"
+
+# Secrets (MUST be provided at install time via --set or values file)
+# WARNING: Do not commit real secrets to version control!
+secrets:
+  # Neon PostgreSQL connection string
+  databaseUrl: ""
+  # JWT signing secret (minimum 32 characters)
+  jwtSecret: ""
+  # OpenAI API key for chatbot
+  openaiApiKey: ""
