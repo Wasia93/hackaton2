@@ -2,6 +2,7 @@
 # Phase V: Cloud Deployment
 #
 # Runs on push to main branch and creates releases
+# Deploy job is skipped if KUBE_CONFIG secret is not configured
 
 name: Deploy
 
@@ -84,12 +85,37 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Deploy to Kubernetes (only on main branch, not PRs)
+      - name: Summary
+        run: |
+          echo "## Docker Images Built and Pushed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend:** ${{ steps.meta-backend.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend:** ${{ steps.meta-frontend.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+
+  # Check if deployment secrets are configured
+  check-secrets:
+    name: Check Deployment Secrets
+    runs-on: ubuntu-latest
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - name: Check if KUBE_CONFIG exists
+        id: check
+        run: |
+          if [ -n "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "has-secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-secrets=false" >> $GITHUB_OUTPUT
+            echo "::notice::KUBE_CONFIG secret not configured. Skipping deployment."
+          fi
+
+  # Deploy to Kubernetes (only if secrets are configured)
   deploy:
     name: Deploy to Kubernetes
-    needs: build-and-push
+    needs: [build-and-push, check-secrets]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && needs.check-secrets.outputs.has-secrets == 'true'
     environment: production
 
     steps:
@@ -111,7 +137,6 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
-        if: ${{ secrets.KUBE_CONFIG != '' }}
 
       - name: Deploy with Helm
         run: |
@@ -128,10 +153,38 @@ jobs:
             --set secrets.geminiApiKey=${{ secrets.GEMINI_API_KEY }} \
             --atomic \
             --timeout 10m
-        if: ${{ secrets.KUBE_CONFIG != '' }}
 
       - name: Verify deployment
         run: |
           kubectl rollout status deployment/backend -n todo-app --timeout=5m
           kubectl rollout status deployment/frontend -n todo-app --timeout=5m
-        if: ${{ secrets.KUBE_CONFIG != '' }}
+
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Namespace:** todo-app" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend Image:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend Image:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  # Notify when deployment is skipped
+  skip-deploy-notice:
+    name: Deployment Skipped
+    needs: [build-and-push, check-secrets]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && needs.check-secrets.outputs.has-secrets != 'true'
+
+    steps:
+      - name: Notice
+        run: |
+          echo "## Deployment Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Docker images were built and pushed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**To enable automatic deployment:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Create a Kubernetes cluster (AKS, GKE, or Minikube)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Add the following secrets to this repository:" >> $GITHUB_STEP_SUMMARY
+          echo "   - \`KUBE_CONFIG\` - Base64 encoded kubeconfig" >> $GITHUB_STEP_SUMMARY
+          echo "   - \`DATABASE_URL\` - PostgreSQL connection string" >> $GITHUB_STEP_SUMMARY
+          echo "   - \`JWT_SECRET\` - JWT signing secret" >> $GITHUB_STEP_SUMMARY
+          echo "   - \`GEMINI_API_KEY\` - Google Gemini API key" >> $GITHUB_STEP_SUMMARY
