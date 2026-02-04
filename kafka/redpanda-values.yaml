@@ -1,0 +1,68 @@
+# Redpanda Helm Chart Values
+# Phase V: Cloud Deployment - Kafka-compatible Event Streaming
+#
+# Install with:
+#   helm repo add redpanda https://charts.redpanda.com
+#   helm install redpanda redpanda/redpanda -n todo-app -f kafka/redpanda-values.yaml
+
+# Cluster configuration
+statefulset:
+  replicas: 3
+
+# Resource allocation
+resources:
+  cpu:
+    cores: 1
+  memory:
+    container:
+      max: 2Gi
+    redpanda:
+      memory: 1Gi
+      reserveMemory: 200Mi
+
+# Storage configuration
+storage:
+  persistentVolume:
+    enabled: true
+    size: 20Gi
+    storageClass: ""  # Use default storage class
+
+# External access (disabled for internal cluster use)
+external:
+  enabled: false
+
+# Listeners configuration
+listeners:
+  kafka:
+    port: 9092
+  admin:
+    port: 9644
+  schemaRegistry:
+    enabled: true
+    port: 8081
+
+# Authentication (disabled for simplicity, enable in production)
+auth:
+  sasl:
+    enabled: false
+
+# TLS (disabled for internal traffic, enable for production)
+tls:
+  enabled: false
+
+# Logging
+logging:
+  logLevel: info
+
+# Tuning for development/small clusters
+tuning:
+  tune_aio_events: false
+  tune_clocksource: false
+  tune_ballast_file: false
+
+# Console (Redpanda UI)
+console:
+  enabled: true
+  config:
+    connect:
+      enabled: false

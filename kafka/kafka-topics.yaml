@@ -1,0 +1,83 @@
+# Kafka Topics Configuration
+# Phase V: Cloud Deployment
+#
+# This ConfigMap contains initialization scripts for Kafka topics.
+# Apply after Redpanda/Kafka is running:
+#   kubectl apply -f kafka/kafka-topics.yaml
+#   kubectl exec -it redpanda-0 -n todo-app -- /bin/bash /etc/kafka-init/create-topics.sh
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-topics-init
+  namespace: todo-app
+  labels:
+    app: kafka-init
+data:
+  create-topics.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Creating Kafka topics..."
+
+    # Task events topic - main event stream
+    rpk topic create task-events \
+      --partitions 6 \
+      --replicas 3 \
+      --config retention.ms=604800000 \
+      --config cleanup.policy=delete \
+      || echo "Topic task-events already exists"
+
+    # Task analytics topic - for aggregated data
+    rpk topic create task-analytics \
+      --partitions 3 \
+      --replicas 3 \
+      --config retention.ms=2592000000 \
+      --config cleanup.policy=compact \
+      || echo "Topic task-analytics already exists"
+
+    # Dead letter queue for failed events
+    rpk topic create task-events-dlq \
+      --partitions 3 \
+      --replicas 3 \
+      --config retention.ms=2592000000 \
+      || echo "Topic task-events-dlq already exists"
+
+    echo "Topics created successfully!"
+    rpk topic list
+
+---
+# Job to initialize topics on deployment
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topics-init
+  namespace: todo-app
+  labels:
+    app: kafka-init
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: kafka-init
+        image: redpandadata/redpanda:latest
+        command:
+        - /bin/bash
+        - -c
+        - |
+          # Wait for Redpanda to be ready
+          echo "Waiting for Redpanda to be ready..."
+          until rpk cluster health --api-urls redpanda.todo-app.svc.cluster.local:9644 2>/dev/null; do
+            echo "Redpanda not ready, waiting..."
+            sleep 5
+          done
+
+          echo "Creating topics..."
+          rpk topic create task-events --partitions 6 --replicas 3 --brokers redpanda.todo-app.svc.cluster.local:9092 || true
+          rpk topic create task-analytics --partitions 3 --replicas 3 --brokers redpanda.todo-app.svc.cluster.local:9092 || true
+          rpk topic create task-events-dlq --partitions 3 --replicas 3 --brokers redpanda.todo-app.svc.cluster.local:9092 || true
+
+          echo "Topics:"
+          rpk topic list --brokers redpanda.todo-app.svc.cluster.local:9092

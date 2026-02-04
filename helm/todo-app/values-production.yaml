@@ -1,0 +1,158 @@
+# Production Values for Todo App Helm Chart
+# Phase V: Cloud Deployment
+#
+# Usage:
+#   helm upgrade --install todo-app ./helm/todo-app -f helm/todo-app/values-production.yaml
+
+# Global settings
+namespace: todo-app
+
+# Frontend configuration
+frontend:
+  replicaCount: 3
+
+  image:
+    repository: ghcr.io/wasia93/hackaton2/frontend
+    tag: latest
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3000
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  probes:
+    liveness:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+    readiness:
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Backend configuration
+backend:
+  replicaCount: 3
+
+  image:
+    repository: ghcr.io/wasia93/hackaton2/backend
+    tag: latest
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  probes:
+    liveness:
+      path: /health
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+    readiness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+
+  # Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Kafka configuration
+kafka:
+  enabled: true
+  bootstrapServers: "redpanda.todo-app.svc.cluster.local:9092"
+  topic: "task-events"
+
+# Configuration (non-sensitive)
+config:
+  backendUrl: "http://backend:8000"
+  geminiModel: "gemini-2.5-flash"
+  corsOrigins: '["https://todo.yourdomain.com"]'
+
+# Secrets (set via --set or external secrets manager)
+secrets:
+  databaseUrl: ""  # Required: Set via --set secrets.databaseUrl=...
+  jwtSecret: ""    # Required: Set via --set secrets.jwtSecret=...
+  geminiApiKey: "" # Required: Set via --set secrets.geminiApiKey=...
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+  hosts:
+    - host: todo.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frontend
+              port: 3000
+        - path: /api
+          pathType: Prefix
+          backend:
+            service:
+              name: backend
+              port: 8000
+        - path: /health
+          pathType: Exact
+          backend:
+            service:
+              name: backend
+              port: 8000
+        - path: /docs
+          pathType: Prefix
+          backend:
+            service:
+              name: backend
+              port: 8000
+  tls:
+    - secretName: todo-tls-secret
+      hosts:
+        - todo.yourdomain.com
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
