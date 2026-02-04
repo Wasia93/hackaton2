@@ -3,7 +3,7 @@
 # [From]: specs/phase4-kubernetes/spec.md FR-1, specs/phase4-kubernetes/plan.md Section 2.2
 
 # Use Python 3.12 for psycopg2-binary compatibility (3.13 has API breaking changes)
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 # Set working directory
 WORKDIR /app
