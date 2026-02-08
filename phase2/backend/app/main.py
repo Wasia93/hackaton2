@@ -13,6 +13,7 @@ from app.api.chat import router as chat_router
 from app.api.conversations import router as conversations_router
 from app.core.database import create_db_and_tables, get_session
 from app.core.auth import get_current_user_id
+from app.core.rate_limit import RateLimitMiddleware
 
 
 # Create FastAPI application instance
@@ -37,6 +38,9 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+
+# Rate limiting middleware
+app.add_middleware(RateLimitMiddleware, default_limit=100, auth_limit=20, window_seconds=60)
 
 
 # Include routers
@@ -96,6 +100,15 @@ async def debug_auth(user_id: str = Depends(get_current_user_id)):
         "authenticated": True,
         "user_id": user_id
     }
+
+
+# Analytics endpoint (Phase V: Event Consumer)
+@app.get("/analytics", tags=["system"])
+async def analytics():
+    """Get task event analytics from Kafka consumer."""
+    from app.services.event_consumer import EventConsumer
+    consumer = await EventConsumer.get_instance()
+    return consumer.get_analytics()
 
 
 # Root endpoint

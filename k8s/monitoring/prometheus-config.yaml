@@ -1,0 +1,67 @@
+# Phase V: Prometheus Monitoring Configuration
+#
+# Prerequisites:
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm install prometheus prometheus-community/kube-prometheus-stack \
+#     --namespace monitoring --create-namespace \
+#     -f k8s/monitoring/prometheus-config.yaml
+
+---
+# ServiceMonitor for backend metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: todo-backend-monitor
+  namespace: todo-app
+  labels:
+    app: backend
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  endpoints:
+    - port: http
+      path: /health
+      interval: 30s
+  namespaceSelector:
+    matchNames:
+      - todo-app
+
+---
+# PrometheusRule for alerting
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: todo-app-alerts
+  namespace: todo-app
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: todo-app
+      rules:
+        - alert: BackendDown
+          expr: up{job="backend"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Backend service is down"
+            description: "Backend pod has been down for more than 1 minute."
+        - alert: HighErrorRate
+          expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate on backend"
+            description: "Backend error rate is above 10% for 5 minutes."
+        - alert: HighLatency
+          expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency on backend"
+            description: "95th percentile latency is above 1 second."

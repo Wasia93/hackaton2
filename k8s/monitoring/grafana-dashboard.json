@@ -1,0 +1,82 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Todo App Dashboard",
+    "tags": ["todo-app", "kubernetes"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Backend Pods Status",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "count(kube_pod_status_phase{namespace='todo-app', pod=~'backend.*', phase='Running'})",
+            "legendFormat": "Running Pods"
+          }
+        ]
+      },
+      {
+        "title": "Frontend Pods Status",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+        "targets": [
+          {
+            "expr": "count(kube_pod_status_phase{namespace='todo-app', pod=~'frontend.*', phase='Running'})",
+            "legendFormat": "Running Pods"
+          }
+        ]
+      },
+      {
+        "title": "CPU Usage",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{namespace='todo-app'}[5m])) by (pod)",
+            "legendFormat": "{{pod}}"
+          }
+        ]
+      },
+      {
+        "title": "Memory Usage",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+        "targets": [
+          {
+            "expr": "sum(container_memory_working_set_bytes{namespace='todo-app'}) by (pod) / 1024 / 1024",
+            "legendFormat": "{{pod}} (MB)"
+          }
+        ]
+      },
+      {
+        "title": "Health Check Status",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
+        "targets": [
+          {
+            "expr": "up{namespace='todo-app'}",
+            "legendFormat": "{{pod}}"
+          }
+        ]
+      },
+      {
+        "title": "HPA Replicas",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+        "targets": [
+          {
+            "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace='todo-app'}",
+            "legendFormat": "Current Replicas"
+          },
+          {
+            "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace='todo-app'}",
+            "legendFormat": "Desired Replicas"
+          }
+        ]
+      }
+    ],
+    "time": { "from": "now-1h", "to": "now" },
+    "refresh": "30s"
+  }
+}

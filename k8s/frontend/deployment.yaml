@@ -25,8 +25,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: todo-frontend:latest
-          imagePullPolicy: IfNotPresent
+          image: docker-frontend:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 3000
               protocol: TCP

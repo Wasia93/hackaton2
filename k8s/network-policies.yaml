@@ -1,0 +1,83 @@
+# Phase IV: Network Policies
+# Pod isolation and traffic control for todo-app namespace
+
+---
+# Default deny all ingress traffic in the namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: todo-app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+
+---
+# Allow frontend to receive traffic from ingress and NodePort
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-ingress
+  namespace: todo-app
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3000
+
+---
+# Allow backend to receive traffic from frontend and ingress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-ingress
+  namespace: todo-app
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8000
+
+---
+# Allow backend egress to external services (DB, AI APIs, Kafka)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-egress
+  namespace: todo-app
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow HTTPS (AI APIs, external services)
+    - ports:
+        - protocol: TCP
+          port: 443
+    # Allow PostgreSQL
+    - ports:
+        - protocol: TCP
+          port: 5432
+    # Allow Kafka
+    - ports:
+        - protocol: TCP
+          port: 9092

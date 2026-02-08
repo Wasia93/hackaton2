@@ -1,0 +1,83 @@
+# Phase IV: RBAC Configuration
+# Role-Based Access Control for todo-app namespace
+
+---
+# ServiceAccount for backend pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: todo-backend-sa
+  namespace: todo-app
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: todo-app
+
+---
+# ServiceAccount for frontend pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: todo-frontend-sa
+  namespace: todo-app
+  labels:
+    app: frontend
+    app.kubernetes.io/part-of: todo-app
+
+---
+# Role: backend can read configmaps and secrets in its namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: todo-backend-role
+  namespace: todo-app
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+
+---
+# Role: frontend can only read configmaps
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: todo-frontend-role
+  namespace: todo-app
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+---
+# Bind backend role to backend service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: todo-backend-binding
+  namespace: todo-app
+subjects:
+  - kind: ServiceAccount
+    name: todo-backend-sa
+    namespace: todo-app
+roleRef:
+  kind: Role
+  name: todo-backend-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Bind frontend role to frontend service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: todo-frontend-binding
+  namespace: todo-app
+subjects:
+  - kind: ServiceAccount
+    name: todo-frontend-sa
+    namespace: todo-app
+roleRef:
+  kind: Role
+  name: todo-frontend-role
+  apiGroup: rbac.authorization.k8s.io
