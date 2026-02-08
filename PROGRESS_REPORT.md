@@ -1,7 +1,7 @@
 # Progress Report: Evolution of Todo - All Phases
 
 **Date**: 2026-02-08
-**Status**: All phases implemented and deployed
+**Status**: All phases implemented and deployed to Azure AKS
 
 ---
 
@@ -14,6 +14,7 @@
 | **III** | AI Chatbot (MCP) | COMPLETE | 100% |
 | **IV** | Kubernetes Deployment | COMPLETE | 100% |
 | **V** | Cloud + Kafka | COMPLETE | 100% |
+| **VI** | Azure AKS Deployment | COMPLETE | 100% |
 
 ---
 
@@ -104,6 +105,41 @@
 - Oracle OKE deployment guide
 - Production Helm values with cloud-ready configuration
 
+## Phase VI: Azure AKS Deployment - COMPLETE
+
+### Azure Infrastructure Provisioned
+- **Resource Group**: `todo-rg-west` in West US 2
+- **AKS Cluster**: `todo-aks` - Kubernetes v1.33.6
+  - 2 nodes: Standard_B2s_v2 (2 vCPU, 8 GB RAM each)
+  - System-assigned Managed Identity
+  - RBAC enabled
+- **Container Registry**: `todoacrhackathon.azurecr.io` (Basic SKU)
+  - ACR attached to AKS via managed identity (no image pull secrets needed)
+
+### Images Pushed to ACR
+- `todoacrhackathon.azurecr.io/todo-backend:latest`
+- `todoacrhackathon.azurecr.io/todo-frontend:latest`
+
+### Azure Kubernetes Resources
+- Namespace: `todo-app`
+- Backend: 2 replicas, Running, spread across both nodes
+- Frontend: 2 replicas, Running, spread across both nodes
+- Backend Service: Azure LoadBalancer - External IP `20.69.114.112`
+- Frontend Service: Azure LoadBalancer - External IP `20.42.153.18`
+- HPA: Backend auto-scaling 2-10 pods (CPU at 2%/70% target)
+- ConfigMap, Secrets, RBAC, Network Policies all applied
+
+### Deployment Verified
+- All 4 pods Running with 0 restarts
+- Health endpoint: `{"status":"healthy","service":"Evolution of Todo","version":"2.0.0"}`
+- Database: OK (SQLite)
+- Frontend landing page accessible with Login/Register
+
+### CI/CD Pipeline Status
+- CI #17 (main): Passed (37s)
+- Deploy #17 (main): Passed (3m 9s)
+- All main branch pipelines passing consistently
+
 ---
 
 ## Infrastructure Files Created
@@ -168,6 +204,13 @@ hackaton2/
 - Backend: http://localhost:8001
 - Analytics: http://localhost:8001/analytics
 
+### Azure AKS (Live)
+- Frontend: http://20.42.153.18
+- Backend API: http://20.69.114.112
+- Health Check: http://20.69.114.112/health
+- API Docs: http://20.69.114.112/docs
+- Analytics: http://20.69.114.112/analytics
+
 ---
 
-**All 5 phases complete and deployed.**
+**All 6 phases complete. Application deployed live on Azure AKS.**

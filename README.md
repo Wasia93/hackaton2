@@ -11,6 +11,7 @@ A progressive todo application evolving from a simple console app to a cloud-nat
 | **III** | AI Chatbot | Gemini, MCP Server, OpenAI Agents SDK | Complete |
 | **IV** | Kubernetes | Docker, Helm, K8s, HPA, RBAC | Complete |
 | **V** | Cloud Deployment | GitHub Actions, Kafka, Dapr, Prometheus | Complete |
+| **VI** | Azure AKS | Azure AKS, ACR, LoadBalancer, Managed Identity | Complete |
 
 ---
 
@@ -178,6 +179,78 @@ kubectl apply -f k8s/network-policies.yaml
 
 ---
 
+## Phase VI: Azure Cloud Deployment (Live)
+
+**Production deployment on Azure Kubernetes Service (AKS).**
+
+### Azure Infrastructure
+| Resource | Details |
+|----------|---------|
+| **Resource Group** | `todo-rg-west` (West US 2) |
+| **AKS Cluster** | `todo-aks` - Kubernetes v1.33.6, 2 nodes (Standard_B2s_v2) |
+| **Container Registry** | `todoacrhackathon.azurecr.io` (Basic SKU) |
+| **Managed Identity** | System-assigned, ACR pull access |
+| **Load Balancers** | 2x Azure LoadBalancer (frontend + backend) |
+
+### Deployed Resources on AKS
+| Resource | Status |
+|----------|--------|
+| Backend Pods | 2/2 Running (spread across both nodes) |
+| Frontend Pods | 2/2 Running (spread across both nodes) |
+| Backend Service | LoadBalancer - `20.69.114.112:80` |
+| Frontend Service | LoadBalancer - `20.42.153.18:80` |
+| HPA | Backend auto-scaling 2-10 pods (CPU 2%/70%) |
+| RBAC | Service accounts, roles, role bindings |
+| Network Policies | Default deny + selective allow |
+
+### Live URLs
+| Service | URL |
+|---------|-----|
+| Frontend (Landing Page) | http://20.42.153.18 |
+| Backend API | http://20.69.114.112 |
+| Health Check | http://20.69.114.112/health |
+| API Documentation | http://20.69.114.112/docs |
+| Analytics | http://20.69.114.112/analytics |
+
+### Azure Deployment Steps
+```bash
+# 1. Login to Azure
+az login --use-device-code
+
+# 2. Create resource group
+az group create --name todo-rg-west --location westus2
+
+# 3. Create ACR and AKS
+az acr create --resource-group todo-rg-west --name todoacrhackathon --sku Basic
+az aks create --resource-group todo-rg-west --name todo-aks \
+  --node-count 2 --enable-managed-identity --generate-ssh-keys \
+  --node-vm-size Standard_B2s_v2
+
+# 4. Attach ACR to AKS
+az aks update -n todo-aks -g todo-rg-west --attach-acr todoacrhackathon
+
+# 5. Push images to ACR
+az acr login --name todoacrhackathon
+docker tag docker-backend:latest todoacrhackathon.azurecr.io/todo-backend:latest
+docker tag docker-frontend:latest todoacrhackathon.azurecr.io/todo-frontend:latest
+docker push todoacrhackathon.azurecr.io/todo-backend:latest
+docker push todoacrhackathon.azurecr.io/todo-frontend:latest
+
+# 6. Get AKS credentials and deploy
+az aks get-credentials --resource-group todo-rg-west --name todo-aks
+kubectl create namespace todo-app
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/backend/
+kubectl apply -f k8s/frontend/
+kubectl apply -f k8s/rbac.yaml
+kubectl apply -f k8s/network-policies.yaml
+```
+
+**Tech:** Azure AKS | Azure Container Registry | Azure LoadBalancer | Managed Identity | Kubernetes v1.33
+
+---
+
 ## Project Structure
 
 ```
@@ -298,7 +371,10 @@ All specifications are in `specs/` with `spec.md`, `plan.md`, and `tasks.md` for
 
 - **GitHub**: https://github.com/Wasia93/hackaton2
 - **CI/CD**: GitHub Actions (CI + Deploy pipelines)
-- **Registry**: GitHub Container Registry (GHCR)
+- **Registry**: Azure Container Registry (`todoacrhackathon.azurecr.io`) + GHCR
+- **Cloud**: Azure AKS (`todo-aks` in West US 2)
+- **Live Frontend**: http://20.42.153.18
+- **Live Backend**: http://20.69.114.112
 
 ---
 
