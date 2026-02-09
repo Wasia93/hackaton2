@@ -1,0 +1,15 @@
+node_modules
+frontend/node_modules
+frontend/.next
+.git
+.github
+specs
+history
+helm
+kafka
+k8s
+*.md
+__pycache__
+.pytest_cache
+.venv
+phase1
