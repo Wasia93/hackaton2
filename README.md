@@ -179,75 +179,32 @@ kubectl apply -f k8s/network-policies.yaml
 
 ---
 
-## Phase VI: Azure Cloud Deployment (Live)
+## Phase VI: Vercel Cloud Deployment (Live)
 
-**Production deployment on Azure Kubernetes Service (AKS).**
-
-### Azure Infrastructure
-| Resource | Details |
-|----------|---------|
-| **Resource Group** | `todo-rg-west` (West US 2) |
-| **AKS Cluster** | `todo-aks` - Kubernetes v1.33.6, 2 nodes (Standard_B2s_v2) |
-| **Container Registry** | `todoacrhackathon.azurecr.io` (Basic SKU) |
-| **Managed Identity** | System-assigned, ACR pull access |
-| **Load Balancers** | 2x Azure LoadBalancer (frontend + backend) |
-
-### Deployed Resources on AKS
-| Resource | Status |
-|----------|--------|
-| Backend Pods | 2/2 Running (spread across both nodes) |
-| Frontend Pods | 2/2 Running (spread across both nodes) |
-| Backend Service | LoadBalancer - `20.69.114.112:80` |
-| Frontend Service | LoadBalancer - `20.42.153.18:80` |
-| HPA | Backend auto-scaling 2-10 pods (CPU 2%/70%) |
-| RBAC | Service accounts, roles, role bindings |
-| Network Policies | Default deny + selective allow |
+**Production deployment on Vercel with Neon PostgreSQL.**
 
 ### Live URLs
 | Service | URL |
 |---------|-----|
-| Frontend (Landing Page) | http://20.42.153.18 |
-| Backend API | http://20.69.114.112 |
-| Health Check | http://20.69.114.112/health |
-| API Documentation | http://20.69.114.112/docs |
-| Analytics | http://20.69.114.112/analytics |
+| Frontend (Landing Page) | https://hackaton2-omega.vercel.app |
+| Backend API | https://backend-navy-five-43.vercel.app |
+| Health Check | https://backend-navy-five-43.vercel.app/health |
+| API Documentation | https://backend-navy-five-43.vercel.app/docs |
 
-### Azure Deployment Steps
-```bash
-# 1. Login to Azure
-az login --use-device-code
+### Deployment Architecture
+| Component | Platform | Details |
+|-----------|----------|---------|
+| **Frontend** | Vercel | Next.js 16 serverless, auto-deploy on push |
+| **Backend** | Vercel | FastAPI serverless Python runtime |
+| **Database** | Neon PostgreSQL | Serverless Postgres (East US 2) |
 
-# 2. Create resource group
-az group create --name todo-rg-west --location westus2
+### Previous: Azure AKS Deployment
+The application was also deployed to Azure Kubernetes Service (AKS) during Phase V:
+- **AKS Cluster**: `todo-aks` in West US 2, 2 nodes (Standard_B2s_v2)
+- **Container Registry**: `todoacrhackathon.azurecr.io`
+- **Infrastructure**: LoadBalancer services, HPA, RBAC, Network Policies
 
-# 3. Create ACR and AKS
-az acr create --resource-group todo-rg-west --name todoacrhackathon --sku Basic
-az aks create --resource-group todo-rg-west --name todo-aks \
-  --node-count 2 --enable-managed-identity --generate-ssh-keys \
-  --node-vm-size Standard_B2s_v2
-
-# 4. Attach ACR to AKS
-az aks update -n todo-aks -g todo-rg-west --attach-acr todoacrhackathon
-
-# 5. Push images to ACR
-az acr login --name todoacrhackathon
-docker tag docker-backend:latest todoacrhackathon.azurecr.io/todo-backend:latest
-docker tag docker-frontend:latest todoacrhackathon.azurecr.io/todo-frontend:latest
-docker push todoacrhackathon.azurecr.io/todo-backend:latest
-docker push todoacrhackathon.azurecr.io/todo-frontend:latest
-
-# 6. Get AKS credentials and deploy
-az aks get-credentials --resource-group todo-rg-west --name todo-aks
-kubectl create namespace todo-app
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secrets.yaml
-kubectl apply -f k8s/backend/
-kubectl apply -f k8s/frontend/
-kubectl apply -f k8s/rbac.yaml
-kubectl apply -f k8s/network-policies.yaml
-```
-
-**Tech:** Azure AKS | Azure Container Registry | Azure LoadBalancer | Managed Identity | Kubernetes v1.33
+**Tech:** Vercel | Neon PostgreSQL | FastAPI Serverless | Next.js
 
 ---
 
@@ -371,10 +328,9 @@ All specifications are in `specs/` with `spec.md`, `plan.md`, and `tasks.md` for
 
 - **GitHub**: https://github.com/Wasia93/hackaton2
 - **CI/CD**: GitHub Actions (CI + Deploy pipelines)
-- **Registry**: Azure Container Registry (`todoacrhackathon.azurecr.io`) + GHCR
-- **Cloud**: Azure AKS (`todo-aks` in West US 2)
-- **Live Frontend**: http://20.42.153.18
-- **Live Backend**: http://20.69.114.112
+- **Live Frontend**: https://hackaton2-omega.vercel.app
+- **Live Backend**: https://backend-navy-five-43.vercel.app
+- **Database**: Neon PostgreSQL (serverless)
 
 ---
 
