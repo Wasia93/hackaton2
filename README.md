@@ -8,10 +8,10 @@ A progressive todo application evolving from a simple console app to a cloud-nat
 |-------|------|-------|--------|
 | **I** | Console App | Python 3.13, UV | Complete |
 | **II** | Web Application | Next.js, FastAPI, SQLModel, JWT | Complete |
-| **III** | AI Chatbot | Gemini, MCP Server, OpenAI Agents SDK | Complete |
+| **III** | AI Chatbot | OpenAI GPT-4o-mini, MCP Server, OpenAI Agents SDK | Complete |
 | **IV** | Kubernetes | Docker, Helm, K8s, HPA, RBAC | Complete |
 | **V** | Cloud Deployment | GitHub Actions, Kafka, Dapr, Prometheus | Complete |
-| **VI** | Azure AKS | Azure AKS, ACR, LoadBalancer, Managed Identity | Complete |
+| **VI** | Cloud Deployment | Vercel, Azure AKS, ACR, Neon PostgreSQL | Complete |
 
 ---
 
@@ -80,7 +80,7 @@ cd frontend && npm run dev
 
 **Natural language task management via AI-powered chatbot.**
 
-- Gemini AI agent with system instructions for task management
+- OpenAI GPT-4o-mini agent with system instructions for task management
 - MCP (Model Context Protocol) server with 7 tools:
   - `create_task` | `list_tasks` | `get_task` | `update_task` | `complete_task` | `delete_task` | `search_tasks`
 - Conversation persistence in database
@@ -94,7 +94,7 @@ cd frontend && npm run dev
 - "Mark task 1 as done"
 - "Find tasks about shopping"
 
-**Tech:** Gemini 2.5 Flash | OpenAI Agents SDK | MCP | Conversation persistence
+**Tech:** OpenAI GPT-4o-mini | OpenAI Agents SDK | MCP | Conversation persistence
 
 ---
 
@@ -179,11 +179,12 @@ kubectl apply -f k8s/network-policies.yaml
 
 ---
 
-## Phase VI: Vercel Cloud Deployment (Live)
+## Phase VI: Cloud Deployment (Live)
 
-**Production deployment on Vercel with Neon PostgreSQL.**
+**Dual production deployment on Vercel (serverless) and Azure AKS (Kubernetes).**
 
-### Live URLs
+### Deployment 1: Vercel (Serverless)
+
 | Service | URL |
 |---------|-----|
 | Frontend (Landing Page) | https://hackaton2-omega.vercel.app |
@@ -191,20 +192,35 @@ kubectl apply -f k8s/network-policies.yaml
 | Health Check | https://backend-navy-five-43.vercel.app/health |
 | API Documentation | https://backend-navy-five-43.vercel.app/docs |
 
-### Deployment Architecture
 | Component | Platform | Details |
 |-----------|----------|---------|
 | **Frontend** | Vercel | Next.js 16 serverless, auto-deploy on push |
 | **Backend** | Vercel | FastAPI serverless Python runtime |
 | **Database** | Neon PostgreSQL | Serverless Postgres (East US 2) |
 
-### Previous: Azure AKS Deployment
-The application was also deployed to Azure Kubernetes Service (AKS) during Phase V:
-- **AKS Cluster**: `todo-aks` in West US 2, 2 nodes (Standard_B2s_v2)
-- **Container Registry**: `todoacrhackathon.azurecr.io`
-- **Infrastructure**: LoadBalancer services, HPA, RBAC, Network Policies
+### Deployment 2: Azure AKS (Kubernetes)
 
-**Tech:** Vercel | Neon PostgreSQL | FastAPI Serverless | Next.js
+| Service | URL |
+|---------|-----|
+| Frontend | http://20.42.153.18 |
+| Backend API | http://20.69.114.112 |
+| Health Check | http://20.69.114.112/health |
+
+| Component | Platform | Details |
+|-----------|----------|---------|
+| **AKS Cluster** | Azure | `todo-aks` in West US 2, 2 nodes (Standard_B2s_v2) |
+| **Container Registry** | Azure ACR | `todoacrhackathon.azurecr.io` |
+| **Backend** | K8s Deployment | 2 replicas, liveness/readiness probes, HPA |
+| **Frontend** | K8s Deployment | 2 replicas, LoadBalancer service |
+| **Infrastructure** | K8s | RBAC, Network Policies, Secrets, ConfigMaps |
+
+### Features (Both Deployments)
+- User registration and login (JWT authentication)
+- Task CRUD operations via REST API
+- AI chatbot (OpenAI GPT-4o-mini) with MCP tool calling
+- Conversation persistence in database
+
+**Tech:** Vercel | Azure AKS | ACR | Neon PostgreSQL | FastAPI | Next.js
 
 ---
 
@@ -308,7 +324,8 @@ npm install && npm run dev
 |----------|-------------|----------|
 | `DATABASE_URL` | Database connection string | Yes |
 | `JWT_SECRET` | JWT signing secret (min 32 chars) | Yes |
-| `GEMINI_API_KEY` | Google Gemini API key | For Phase III |
+| `OPENAI_API_KEY` | OpenAI API key (GPT-4o-mini) | For Phase III |
+| `GEMINI_API_KEY` | Google Gemini API key (fallback) | Optional |
 | `KAFKA_ENABLED` | Enable Kafka events (`true`/`false`) | For Phase V |
 | `KAFKA_BOOTSTRAP_SERVERS` | Kafka broker address | For Phase V |
 
@@ -328,8 +345,10 @@ All specifications are in `specs/` with `spec.md`, `plan.md`, and `tasks.md` for
 
 - **GitHub**: https://github.com/Wasia93/hackaton2
 - **CI/CD**: GitHub Actions (CI + Deploy pipelines)
-- **Live Frontend**: https://hackaton2-omega.vercel.app
-- **Live Backend**: https://backend-navy-five-43.vercel.app
+- **Vercel Frontend**: https://hackaton2-omega.vercel.app
+- **Vercel Backend**: https://backend-navy-five-43.vercel.app
+- **Azure Frontend**: http://20.42.153.18
+- **Azure Backend**: http://20.69.114.112
 - **Database**: Neon PostgreSQL (serverless)
 
 ---
